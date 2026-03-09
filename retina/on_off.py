@@ -5,6 +5,8 @@ Simulates the retina's dual-pathway processing for brightness changes.
 ON channel responds to brightening; OFF channel responds to darkening.
 """
 
+import numpy as np
+
 
 def compute_on_off_channels(current_frame, previous_frame):
     """Compute ON and OFF channels from consecutive frames.
@@ -18,8 +20,12 @@ def compute_on_off_channels(current_frame, previous_frame):
         on_channel: regions that got brighter (polarity +1).
         off_channel: regions that got darker (polarity -1).
     """
-    # TODO: Implement ON/OFF channels
-    # 1. Compute difference: current - previous
-    # 2. ON channel = max(difference, 0)   -> brightening
-    # 3. OFF channel = max(-difference, 0) -> darkening
-    raise NotImplementedError("Step 2: Implement ON/OFF channels")
+    diff = current_frame.astype(np.float64) - previous_frame.astype(np.float64)
+
+    # ON channel: brightening (positive changes)
+    on_channel = np.clip(diff, 0, 255).astype(np.uint8)
+
+    # OFF channel: darkening (negative changes, shown as positive values)
+    off_channel = np.clip(-diff, 0, 255).astype(np.uint8)
+
+    return on_channel, off_channel

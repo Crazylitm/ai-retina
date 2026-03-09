@@ -6,6 +6,9 @@ frame differences, highlighting moving objects and suppressing
 static backgrounds.
 """
 
+import cv2
+import numpy as np
+
 
 def detect_temporal_change(current_frame, previous_frame, threshold=15):
     """Detect temporal changes between consecutive frames.
@@ -16,10 +19,17 @@ def detect_temporal_change(current_frame, previous_frame, threshold=15):
         threshold: Minimum pixel difference to count as change.
 
     Returns:
-        Binary mask of changed regions.
+        Binary mask of changed regions (255 = changed, 0 = static).
     """
-    # TODO: Implement temporal change detection
-    # 1. Compute absolute difference |frame(t) - frame(t-1)|
-    # 2. Apply threshold to get binary change mask
-    # 3. Optionally apply morphological operations to clean up noise
-    raise NotImplementedError("Step 3: Implement temporal change detection")
+    # Absolute difference
+    diff = cv2.absdiff(current_frame, previous_frame)
+
+    # Threshold to binary
+    _, mask = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
+
+    # Clean up noise with morphological operations
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel)
+
+    return mask

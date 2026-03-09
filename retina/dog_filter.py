@@ -5,6 +5,9 @@ Implements Difference of Gaussian (DoG) filtering to simulate
 the spatial contrast enhancement performed by retinal ganglion cells.
 """
 
+import cv2
+import numpy as np
+
 
 def apply_dog_filter(frame, sigma_center=1.0, sigma_surround=3.0):
     """Apply Difference of Gaussian filter to a frame.
@@ -17,8 +20,17 @@ def apply_dog_filter(frame, sigma_center=1.0, sigma_surround=3.0):
     Returns:
         DoG-filtered image highlighting edges and suppressing flat regions.
     """
-    # TODO: Implement DoG filter
-    # 1. Apply Gaussian blur with sigma_center
-    # 2. Apply Gaussian blur with sigma_surround
-    # 3. Return difference (center - surround)
-    raise NotImplementedError("Step 1: Implement DoG filter")
+    # Compute kernel sizes (must be odd)
+    ksize_center = int(6 * sigma_center + 1) | 1
+    ksize_surround = int(6 * sigma_surround + 1) | 1
+
+    # Apply Gaussian blurs
+    center = cv2.GaussianBlur(frame.astype(np.float64),
+                              (ksize_center, ksize_center), sigma_center)
+    surround = cv2.GaussianBlur(frame.astype(np.float64),
+                                (ksize_surround, ksize_surround), sigma_surround)
+
+    # DoG = center - surround
+    dog = center - surround
+
+    return dog

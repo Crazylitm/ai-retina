@@ -307,7 +307,81 @@ AI Retina 的长期目标是探索：
 
 ---
 
-## 13. 作者
+## 13. 更新日志
+
+### V1.0.0 — 2026-03-09 | 核心模块实现
+
+所有 V1 仿生视网膜前端模块已实现，可通过摄像头实时运行完整 pipeline。
+
+#### 已实现的模块
+
+**`retina/dog_filter.py` — 中心-周围感受野 (DoG)**
+
+- 使用 `cv2.GaussianBlur` 实现 Difference of Gaussian
+- 支持自定义 `sigma_center`（默认 1.0）和 `sigma_surround`（默认 3.0）
+- 输出浮点数差分图像，突出边缘、抑制平坦区域
+
+**`retina/on_off.py` — ON / OFF 通道**
+
+- 计算相邻帧的亮度差异
+- ON 通道：`max(current - previous, 0)` — 变亮区域
+- OFF 通道：`max(previous - current, 0)` — 变暗区域
+
+**`retina/temporal.py` — 时间变化检测**
+
+- 使用 `cv2.absdiff` 计算帧间差异
+- 阈值化生成二值运动掩码（默认阈值 15）
+- 形态学操作（开运算 + 膨胀）去噪
+
+**`retina/event_encoder.py` — 事件流编码**
+
+- 将帧差异转换为 `(x, y, timestamp, polarity)` 事件元组
+- `polarity = +1`（变亮） / `polarity = -1`（变暗）
+- 新增 `render_events()` 函数：ON 事件显示为绿色，OFF 事件显示为红色
+
+**`viz/dashboard.py` — 可视化面板**
+
+- 2×3 网格布局，同时显示 6 个面板：
+  - 原始画面 | DoG 边缘图 | ON 通道（绿色）
+  - OFF 通道（红色）| 事件流可视化 | 信息面板
+- 每个面板带标签，自动缩放
+
+**`main.py` — 主程序入口**
+
+- 支持命令行参数 `--cam N` 选择摄像头
+- 完整 pipeline：灰度化 → DoG → ON/OFF → 时间变化 → 事件编码 → Dashboard
+- 实时 FPS 和事件数显示
+- 按 `q` 键退出
+
+**`retina/utils.py` — 工具函数**
+
+- `to_grayscale()` — BGR 转灰度
+- `normalize()` — 归一化到 0-255 范围
+
+#### 新增文件
+
+- `retina/__init__.py` — Python 包初始化
+- `viz/__init__.py` — Python 包初始化
+- `tasks/__init__.py` — Python 包初始化
+
+#### 运行方式
+
+```bash
+# 安装依赖
+pip install -r requirements.txt
+
+# 使用默认摄像头
+python3 main.py
+
+# 指定摄像头索引（例如 Logitech 外接摄像头）
+python3 main.py --cam 1
+```
+
+> **注意：** macOS 用户需在 **系统设置 → 隐私与安全性 → 摄像头** 中授权 Terminal 访问摄像头。
+
+---
+
+## 14. 作者
 
 **Mike Li**
 AI / Robotics / Vision Exploration

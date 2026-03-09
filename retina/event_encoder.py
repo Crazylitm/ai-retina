@@ -7,6 +7,8 @@ Event Cameras (DVS). Each event is a tuple:
 where polarity = +1 (brightening) or -1 (darkening).
 """
 
+import numpy as np
+
 
 def encode_events(current_frame, previous_frame, threshold=10, timestamp=0.0):
     """Encode frame differences as an event stream.
@@ -20,9 +22,40 @@ def encode_events(current_frame, previous_frame, threshold=10, timestamp=0.0):
     Returns:
         List of events, each as (x, y, timestamp, polarity).
     """
-    # TODO: Implement event encoding
-    # 1. Compute difference: current - previous
-    # 2. For each pixel exceeding +threshold: emit event with polarity +1
-    # 3. For each pixel exceeding -threshold: emit event with polarity -1
-    # 4. Return list of (x, y, timestamp, polarity) tuples
-    raise NotImplementedError("Step 4: Implement event encoder")
+    diff = current_frame.astype(np.int16) - previous_frame.astype(np.int16)
+
+    events = []
+
+    # ON events (brightening): polarity +1
+    on_ys, on_xs = np.where(diff > threshold)
+    for x, y in zip(on_xs, on_ys):
+        events.append((int(x), int(y), timestamp, 1))
+
+    # OFF events (darkening): polarity -1
+    off_ys, off_xs = np.where(diff < -threshold)
+    for x, y in zip(off_xs, off_ys):
+        events.append((int(x), int(y), timestamp, -1))
+
+    return events
+
+
+def render_events(events, shape):
+    """Render events as a color image for visualization.
+
+    Args:
+        events: List of (x, y, timestamp, polarity) tuples.
+        shape: (height, width) of the output image.
+
+    Returns:
+        BGR image with ON events in green and OFF events in red.
+    """
+    canvas = np.zeros((shape[0], shape[1], 3), dtype=np.uint8)
+
+    for x, y, _, polarity in events:
+        if 0 <= y < shape[0] and 0 <= x < shape[1]:
+            if polarity > 0:
+                canvas[y, x] = (0, 255, 0)   # Green = ON (brighter)
+            else:
+                canvas[y, x] = (0, 0, 255)   # Red = OFF (darker)
+
+    return canvas
